@@ -4,7 +4,10 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <CopyNuGetImplementations>true</CopyNuGetImplementations>
     <DefineConstants Condition=" '$(TargetFramework)' == 'uap10.0' ">$(DefineConstants);WINDOWS_UAP</DefineConstants>
+    <!-- anurse: Removed UAP support for now because I don't want to install the tools
     <TargetFrameworks>net452;netcoreapp1.0;uap10.0</TargetFrameworks>
+    -->
+    <TargetFrameworks>net452;netcoreapp1.0</TargetFrameworks>
     <VersionPrefix>99.99.99-dev</VersionPrefix>
     <AssemblyName Condition=" '$(TargetFramework)' == 'net452' ">xunit.runner.visualstudio.testadapter</AssemblyName>
     <AssemblyName Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">xunit.runner.visualstudio.dotnetcore.testadapter</AssemblyName>

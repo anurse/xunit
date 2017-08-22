@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,8 +13,6 @@ namespace Xunit.Sdk
     /// </summary>
     public class XunitTestCollectionRunner : TestCollectionRunner<IXunitTestCase>
     {
-        readonly IMessageSink diagnosticMessageSink;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="XunitTestCollectionRunner"/> class.
         /// </summary>
@@ -34,13 +32,18 @@ namespace Xunit.Sdk
                                          CancellationTokenSource cancellationTokenSource)
             : base(testCollection, testCases, messageBus, testCaseOrderer, aggregator, cancellationTokenSource)
         {
-            this.diagnosticMessageSink = diagnosticMessageSink;
+            DiagnosticMessageSink = diagnosticMessageSink;
         }
 
         /// <summary>
         /// Gets the fixture mappings that were created during <see cref="AfterTestCollectionStartingAsync"/>.
         /// </summary>
         protected Dictionary<Type, object> CollectionFixtureMappings { get; set; } = new Dictionary<Type, object>();
+
+        /// <summary>
+        /// Gets or sets the message sink to report diagnostic messages to.
+        /// </summary>
+        protected IMessageSink DiagnosticMessageSink { get; set; }
 
         /// <inheritdoc/>
         protected override async Task AfterTestCollectionStartingAsync()
@@ -99,18 +102,18 @@ namespace Xunit.Sdk
                 {
                     try
                     {
-                        var testCaseOrderer = ExtensibilityPointFactory.GetTestCaseOrderer(diagnosticMessageSink, ordererAttribute);
+                        var testCaseOrderer = ExtensibilityPointFactory.GetTestCaseOrderer(DiagnosticMessageSink, ordererAttribute);
                         if (testCaseOrderer != null)
                             return testCaseOrderer;
 
                         var args = ordererAttribute.GetConstructorArguments().Cast<string>().ToList();
-                        diagnosticMessageSink.OnMessage(new DiagnosticMessage($"Could not find type '{args[0]}' in {args[1]} for collection-level test case orderer on test collection '{TestCollection.DisplayName}'"));
+                        DiagnosticMessageSink.OnMessage(new DiagnosticMessage($"Could not find type '{args[0]}' in {args[1]} for collection-level test case orderer on test collection '{TestCollection.DisplayName}'"));
                     }
                     catch (Exception ex)
                     {
                         var innerEx = ex.Unwrap();
                         var args = ordererAttribute.GetConstructorArguments().Cast<string>().ToList();
-                        diagnosticMessageSink.OnMessage(new DiagnosticMessage($"Collection-level test case orderer '{args[0]}' for test collection '{TestCollection.DisplayName}' threw '{innerEx.GetType().FullName}' during construction: {innerEx.Message}{Environment.NewLine}{innerEx.StackTrace}"));
+                        DiagnosticMessageSink.OnMessage(new DiagnosticMessage($"Collection-level test case orderer '{args[0]}' for test collection '{TestCollection.DisplayName}' threw '{innerEx.GetType().FullName}' during construction: {innerEx.Message}{Environment.NewLine}{innerEx.StackTrace}"));
                     }
                 }
             }
@@ -120,6 +123,6 @@ namespace Xunit.Sdk
 
         /// <inheritdoc/>
         protected override Task<RunSummary> RunTestClassAsync(ITestClass testClass, IReflectionTypeInfo @class, IEnumerable<IXunitTestCase> testCases)
-            => new XunitTestClassRunner(testClass, @class, testCases, diagnosticMessageSink, MessageBus, TestCaseOrderer, new ExceptionAggregator(Aggregator), CancellationTokenSource, CollectionFixtureMappings).RunAsync();
+            => new XunitTestClassRunner(testClass, @class, testCases, DiagnosticMessageSink, MessageBus, TestCaseOrderer, new ExceptionAggregator(Aggregator), CancellationTokenSource, CollectionFixtureMappings).RunAsync();
     }
 }
